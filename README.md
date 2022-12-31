@@ -27,3 +27,8 @@ export OPENAI_API_KEY="your_openai_api_key"
 python3 bot.py
 ```
 
+# Screenshots 
+
+![ui](./data/audio_example.png)
+
+![pdf](./data/chat_example.png)
