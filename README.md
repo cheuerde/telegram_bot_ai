@@ -29,6 +29,6 @@ python3 bot.py
 
 # Screenshots 
 
-![ui](./data/audio_example.png)
+![](./data/audio_example.png)
 
-![pdf](./data/chat_example.png)
+![](./data/chat_example.png)
