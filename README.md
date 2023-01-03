@@ -31,4 +31,4 @@ python3 bot.py
 
 ![](./data/audio_example.png)
 
-![](./data/chat_example.jpeg)
+![](./data/chat_example.png)
