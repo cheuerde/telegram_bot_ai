@@ -10,6 +10,7 @@ import time
 import tempfile
 from base64 import b64decode
 import whisper
+import pdf_summary
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -140,9 +141,31 @@ async def audio_message(update: Update, context: CallbackContext):
 
 async def file_receive(update: Update, context: CallbackContext):
   file_id = update.message.document.file_id
+  file_name = update.message.document.file_name
   file = await context.bot.get_file(file_id)
-  await file.download_to_drive()
+  out_file_name = os.path.join(temp_dir, file_name)
+  await file.download_to_drive(out_file_name)
   await update.message.reply_text('File saved')
+
+  # now check if its a pdf
+  _, file_extension = os.path.splitext(out_file_name)
+
+  if file_extension.upper() == '.PDF':
+
+    await update.message.reply_text('Making Summary of PDF')
+    summary_file_name = os.path.join(temp_dir, 'pdf_summary.pdf')
+
+    await update.message.reply_text(out_file_name)
+    await update.message.reply_text(summary_file_name)
+    out = pdf_summary.pdf_to_summary(out_file_name, summary_file_name)
+    if out[0] == "Error":
+      await update.message.reply_text(out[1])
+    else: 
+      await update.message.reply_text(out[1])
+      document = open(out[1], 'rb')
+      await update.send_document(chat_id, document)
+      await update.message.reply_text(out[0])
+
 
 async def image(update: Update, context: ContextTypes.DEFAULT_TYPE):
   try: 
@@ -164,7 +187,7 @@ async def image(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.sendPhoto(chat_id=update.effective_chat.id, photo=response)
 
   except Exception as e:
-response = "Prompt refused by OpenAI API"
+    response = "Prompt refused by OpenAI API"
     await context.bot.send_message(chat_id=update.effective_chat.id, text=response)
 
 async def gpt(update: Update, context: ContextTypes.DEFAULT_TYPE):

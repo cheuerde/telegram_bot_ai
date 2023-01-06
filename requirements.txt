@@ -1,0 +1,5 @@
+openai
+pdfminer
+requests
+python-telegram-bot
+whisper

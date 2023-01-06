@@ -15,28 +15,28 @@ from subprocess import DEVNULL
 laparams = LAParams()
 laparams.char_margin = 1
 laparams.word_margin = 2
-converter = TextConverter(resource_manager, fake_file_handle, laparams=laparams)
 
 def extract_text_by_page(pdf_path):
     with open(pdf_path, 'rb') as fh:
-        for page in PDFPage.get_pages(fh, 
+        for page in PDFPage.get_pages(fh,
                                       caching=True,
                                       check_extractable=True):
             resource_manager = PDFResourceManager()
             fake_file_handle = io.StringIO()
-            converter = TextConverter(resource_manager, fake_file_handle, laparams=LAParams())
+            converter = TextConverter(resource_manager, fake_file_handle, laparams=laparams)
+            #converter = TextConverter(resource_manager, fake_file_handle, laparams=LAParams())
             page_interpreter = PDFPageInterpreter(resource_manager, converter)
             page_interpreter.process_page(page)
-            
+
             text = fake_file_handle.getvalue()
             yield text
-            
+
             # close open handles
             converter.close()
             fake_file_handle.close()
 
 
-            
+
 # if we have "chapters" headings
 #def extract_chapters(text):
 #    # split the text by chapter heading
@@ -93,9 +93,11 @@ def generate_summaries(chapters, min_words_summary = 20):
     summaries[-1] += '.'
     return summaries
 
-def summarize_pdf(summaries, overall_summary, pdf_path):
+def summarize_pdf(summaries, overall_summary, file_out):
     # create the LaTeX file
-    tex_file = pdf_path + '/summaries.tex'
+    out_file_raw, file_extension = os.path.splitext(file_out)
+    pdf_path = os.path.dirname(file_out)
+    tex_file = out_file_raw + '.tex'
     with open(tex_file, 'w') as f:
         # write the document preamble
         f.write(r'\documentclass[12pt]{article}')
@@ -132,29 +134,34 @@ def summarize_pdf(summaries, overall_summary, pdf_path):
             f.write(summary)
             f.write('\end{itemize}')
             f.write('\n')
-        
+
         # end the document
         f.write(r'\end{document}')
-    
+
     # compile the LaTeX file into a PDF
-    outFile = pdf_path + '/out.pdf'
     command_args = ' -output-directory=' + pdf_path +  ' ' + tex_file
-    command = 'pdflatex' + command_args
+    command = 'pdflatex' + command_args + ' 2> /dev/null'
     os.system(command)
     #Popen(['pdflatex', 'summaries.tex'], stdin=DEVNULL, stdout=DEVNULL, stderr=DEVNULL)
-    return outFile, overall_summary
+    return file_out, overall_summary
 
-
-
-def pdf_to_summary(file):
-    try:
-        chapters = extract_text(file)
+def pdf_to_summary(file_in, file_out):
+        chapters = extract_text(file_in)
         summaries = generate_summaries(chapters, min_words_summary = 10)
         overall_summary = create_summary(text = " ".join(summaries).replace('\\item', ''), max_tokens_completion = 400, prompt_in = 'From the given text, generate a concise overall summary: ')
         overall_summary
-        pdf_path = tempfile.mkdtemp()
-        output_file = pdf_path + '/summaries.pdf'
-        out = summarize_pdf(summaries, overall_summary, pdf_path = pdf_path)
-    except Exception as et:
-        out = "Error Processing"
-    return out
+        out = summarize_pdf(summaries, overall_summary, file_out = file_out)
+        return out
+
+
+
+#def pdf_to_summary(file_in, file_out):
+#    try:
+#        chapters = extract_text(file)
+#        summaries = generate_summaries(chapters, min_words_summary = 10)
+#        overall_summary = create_summary(text = " ".join(summaries).replace('\\item', ''), max_tokens_completion = 400, prompt_in = 'From the given text, generate a concise overall summary: ')
+#        overall_summary
+#        out = summarize_pdf(summaries, overall_summary, file_out = file_out)
+#    except Exception as et:
+#        out = ['Error', 'Error Processing File']
+#    return out
