@@ -7,23 +7,17 @@ from typing import List
 import requests as r
 import base64
 import mimetypes
+import os
 
-import requests
-
-hugginface_api_key = os.environ.get("HUGGINGFACE_API_KEY")
+huggingface_api_key = os.environ.get("HUGGINGFACE_API_KEY")
 
 API_URL = "https://api-inference.huggingface.co/models/openai/whisper-medium"
+
+file = "sample1.flac"
+
 headers= {
-    "Authorization": f"Bearer {hugginface_api_key}",
+    "Authorization": f"Bearer {huggingface_api_key}",
 }
-
-def query(filename):
-    with open(filename, "rb") as f:
-        data = f.read()
-    response = requests.request("POST", API_URL, headers=headers, data=data)
-    return json.loads(response.content.decode("utf-8"))
-
-output = query("voice_received.oga")
 
 def predict(path_to_audio:str=None):
     # read audio file
@@ -31,14 +25,13 @@ def predict(path_to_audio:str=None):
       b = i.read()
     # get mimetype
     content_type= mimetypes.guess_type(path_to_audio)[0]
-
     headers= {
-        "Authorization": f"Bearer {HF_TOKEN}",
+        "Authorization": f"Bearer {huggingface_api_key}",
         "Content-Type": content_type
     }
-    response = r.post(ENDPOINT_URL, headers=headers, data=b)
+    response = r.post(API_URL, headers=headers, data=b)
     return response.json()
 
-prediction = predict(path_to_audio="sample1.flac")
+prediction = predict(path_to_audio=file)
 
 prediction
