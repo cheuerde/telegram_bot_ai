@@ -158,7 +158,7 @@ async def file_receive(update: Update, context: CallbackContext):
   # now check if its a pdf
   _, file_extension = os.path.splitext(out_file_name)
 
-  if file_extension.upper() in ['.PDF', '.DOC', '.DOCX', '.PPT', '.PPTX']:
+  if file_extension.upper() in ['.PDF', '.DOC', '.DOCX', '.PPT', '.PPTX', '.TXT']:
 
     if file_extension.upper() == '.PDF':
 
@@ -181,14 +181,19 @@ async def file_receive(update: Update, context: CallbackContext):
 
       out = make_summary.pptx_to_summary(out_file_name, summary_file_name)
 
+    elif file_extension.upper() in ['.TXT']:
+
+      await update.message.reply_text('Making Summary of TXT')
+      summary_file_name = os.path.join(temp_dir, 'pdf_summary.pdf')
+
+      out = make_summary.txt_to_summary(out_file_name, summary_file_name)
+
     if out[0] == "Error":
       await update.message.reply_text(out[1])
     else: 
       await update.message.reply_text(out[1])
-      document = open(out[1], 'rb')
-      await update.send_document(chat_id, document)
-      await update.message.reply_text(out[0])
-
+      document = open(out[0], 'rb')
+      await context.bot.send_document(chat_id=update.effective_chat.id, document=document)
 
 
 async def image(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -214,23 +219,22 @@ async def image(update: Update, context: ContextTypes.DEFAULT_TYPE):
     response = "Prompt refused by OpenAI API"
     await context.bot.send_message(chat_id=update.effective_chat.id, text=response)
 
-async def gpt(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def text_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-  prompt_in = update.message.txt
+  prompt_in = update.message.text
   if is_url(prompt_in):
 
     await update.message.reply_text('Making Summary of URL')
     summary_file_name = os.path.join(temp_dir, 'pdf_summary.pdf')
 
-    out = make_summary.url_to_summary(out_file_name, summary_file_name)
+    out = make_summary.url_to_summary(prompt_in, summary_file_name)
 
     if out[0] == "Error":
       await update.message.reply_text(out[1])
     else: 
       await update.message.reply_text(out[1])
-      document = open(out[1], 'rb')
-      await update.send_document(chat_id, document)
-      await update.message.reply_text(out[0])
+      document = open(out[0], 'rb')
+      await context.bot.send_document(chat_id=update.effective_chat.id, document=document)
   else:
 
     try:
@@ -255,6 +259,26 @@ async def gpt(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(response)
 
 
+
+async def url_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+  prompt_in = update.message.txt
+
+  if is_url(prompt_in):
+
+    await update.message.reply_text('Making Summary of URL')
+    summary_file_name = os.path.join(temp_dir, 'pdf_summary.pdf')
+
+    out = make_summary.url_to_summary(prompt_in, summary_file_name)
+
+    if out[0] == "Error":
+      await update.message.reply_text(out[1])
+    else: 
+      await update.message.reply_text(out[1])
+      document = open(out[0], 'rb')
+      await update.send_document(chat_id, document)
+
+
 if __name__ == '__main__':
 
   # get the api token from the env varialbe teelgram_api_key
@@ -273,7 +297,8 @@ if __name__ == '__main__':
   file_receive_handler = MessageHandler(filters.Document.ALL, file_receive)
   image_handler = CommandHandler('image', image)
   #whisper_handler = CommandHandler('whisper', whisper)
-  gpt_handler = MessageHandler(filters.TEXT & ~filters.COMMAND, gpt)
+  text_message_handler = MessageHandler(filters.TEXT & ~filters.COMMAND, text_message)
+  url_message_handler = MessageHandler(filters.Entity('url'), url_message)
 
   # and the handler when no command was entered and we just respond to the message
   application = ApplicationBuilder().token(telegram_api_key).build()
@@ -284,7 +309,8 @@ if __name__ == '__main__':
   application.add_handler(audio_message_handler)
   application.add_handler(image_handler)
   #application.add_handler(whisper_handler)
-  application.add_handler(gpt_handler)
+  application.add_handler(text_message_handler)
+  application.add_handler(url_message_handler)
   application.add_handler(file_receive_handler)
 
   application.run_polling()

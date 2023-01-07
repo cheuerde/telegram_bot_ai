@@ -6,6 +6,7 @@ import openai
 import json
 import shutil
 import docx
+import pptx
 # for http parsing
 import requests
 from bs4 import BeautifulSoup
@@ -137,14 +138,14 @@ def summarize_pdf(summaries, overall_summary, file_out):
             f.write('\n')
             f.write('\\begin{itemize}')
             f.write('\n')
-            f.write(summary)
+            f.write(summary.replace("\\item", "\\item "))
             f.write('\end{itemize}')
             f.write('\n')
 
         # end the document
         f.write(r'\end{document}')
     # compile the LaTeX file into a PDF
-    command_args = ' -output-directory=' + pdf_path +  ' ' + tex_file
+    command_args = ' -interaction=nonstopmode -output-directory=' + pdf_path +  ' ' + tex_file
     command = 'pdflatex' + command_args + ' 2> /dev/null'
     os.system(command)
     #Popen(['pdflatex', 'summaries.tex'], stdin=DEVNULL, stdout=DEVNULL, stderr=DEVNULL)
@@ -154,42 +155,39 @@ def pdf_to_summary(file_in, file_out):
         chapters = extract_text(file_in)
         summaries = generate_summaries(chapters, min_words_summary = 10)
         overall_summary = create_summary(text = " ".join(summaries).replace('\\item', ''), max_tokens_completion = 400, prompt_in = 'From the given text, generate a concise overall summary: ')
-        overall_summary
         out = summarize_pdf(summaries, overall_summary, file_out = file_out)
         return out
 
 
 # summary from text file
-def txt_file_to_summary(file_in, file_out):
-        with open(file_in, 'r') as file:
+def txt_to_summary(file_in, file_out):
         # Read the contents of the file into a single string
-        text = file.read()
-        chapter = extract_chapters(text, max_words = 1000)
+        with open(file_in, 'r') as file:
+          text = file.read()
+        chapters = extract_chapters(text, max_words = 1000)
         summaries = generate_summaries(chapters, min_words_summary = 10)
         overall_summary = create_summary(text = " ".join(summaries).replace('\\item', ''), max_tokens_completion = 400, prompt_in = 'From the given text, generate a concise overall summary: ')
-        overall_summary
         out = summarize_pdf(summaries, overall_summary, file_out = file_out)
         return out
 
 # summary from word file
-def docx_file_to_summary(file_in, file_out):
+def docx_to_summary(file_in, file_out):
         document = docx.Document(file_in)
         # Create an empty string
         text = ""
         # Iterate over the paragraphs in the document
         for paragraph in document.paragraphs:
         # Add the text of each paragraph to the string
-        text += paragraph.text
-        chapter = extract_chapters(text, max_words = 1000)
+          text += paragraph.text
+        chapters = extract_chapters(text, max_words = 1000)
         summaries = generate_summaries(chapters, min_words_summary = 10)
         overall_summary = create_summary(text = " ".join(summaries).replace('\\item', ''), max_tokens_completion = 400, prompt_in = 'From the given text, generate a concise overall summary: ')
-        overall_summary
         out = summarize_pdf(summaries, overall_summary, file_out = file_out)
         return out
 
 
 # powerpoint
-def pptx_file_to_summary(file_in, file_out):
+def pptx_to_summary(file_in, file_out):
         presentation = pptx.Presentation(file_in)
         # Create an empty string
         text = ""
@@ -201,10 +199,9 @@ def pptx_file_to_summary(file_in, file_out):
             if shape.has_text_frame:
               # Add the text of the text box to the string
               text += shape.text
-        chapter = extract_chapters(text, max_words = 1000)
+        chapters = extract_chapters(text, max_words = 1000)
         summaries = generate_summaries(chapters, min_words_summary = 10)
         overall_summary = create_summary(text = " ".join(summaries).replace('\\item', ''), max_tokens_completion = 400, prompt_in = 'From the given text, generate a concise overall summary: ')
-        overall_summary
         out = summarize_pdf(summaries, overall_summary, file_out = file_out)
         return out
 
@@ -213,16 +210,13 @@ def pptx_file_to_summary(file_in, file_out):
 def url_to_summary(url_in, file_out):
         # Make an HTTP GET request to the webpage
         response = requests.get(url_in)
-
         # Parse the HTML of the webpage
         soup = BeautifulSoup(response.text, 'html.parser')
-
         # Find the text on the webpage
         text = soup.get_text()
-        chapter = extract_chapters(text, max_words = 1000)
+        chapters = extract_chapters(text, max_words = 1000)
         summaries = generate_summaries(chapters, min_words_summary = 10)
         overall_summary = create_summary(text = " ".join(summaries).replace('\\item', ''), max_tokens_completion = 400, prompt_in = 'From the given text, generate a concise overall summary: ')
-        overall_summary
         out = summarize_pdf(summaries, overall_summary, file_out = file_out)
         return out
 
