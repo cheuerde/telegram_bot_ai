@@ -158,7 +158,7 @@ async def file_receive(update: Update, context: CallbackContext):
   # now check if its a pdf
   _, file_extension = os.path.splitext(out_file_name)
 
-  if file_extension.upper() in ['.PDF', '.DOC', '.DOCX', '.PPT', '.PPTX']
+  if file_extension.upper() in ['.PDF', '.DOC', '.DOCX', '.PPT', '.PPTX']:
 
     if file_extension.upper() == '.PDF':
 

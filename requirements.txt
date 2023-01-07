@@ -5,5 +5,3 @@ python-telegram-bot
 whisper
 python-docx
 python-pptx
-beautifulsoup4
-urllib
