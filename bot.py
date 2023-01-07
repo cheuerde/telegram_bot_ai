@@ -232,26 +232,28 @@ async def gpt(update: Update, context: ContextTypes.DEFAULT_TYPE):
       await update.send_document(chat_id, document)
       await update.message.reply_text(out[0])
   else:
-  try:
 
-# create openai response
+    try:
 
-     out = openai.Completion.create(
-       model="text-davinci-003",
-       #model = "text-curie-001",
-       prompt = prompt_in,
-       max_tokens=1000,
-       temperature=0.7
-     )
+#   create openai response
 
-     json_object = json.loads(str(out))
-     response = json_object['choices'][0]['text']
+       out = openai.Completion.create(
+         model="text-davinci-003",
+         #model = "text-curie-001",
+         prompt = prompt_in,
+         max_tokens=1000,
+         temperature=0.7
+       )
 
-  except Exception as et:
+       json_object = json.loads(str(out))
+       response = json_object['choices'][0]['text']
 
-    response = "OpenAI error"
+    except Exception as et:
 
-  await update.message.reply_text(response)
+      response = "OpenAI error"
+
+    await update.message.reply_text(response)
+
 
 if __name__ == '__main__':
 
