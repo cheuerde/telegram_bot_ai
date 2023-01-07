@@ -5,3 +5,6 @@ python-telegram-bot
 whisper
 python-docx
 python-pptx
+bs4
+tensorboard
+torch
