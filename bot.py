@@ -340,8 +340,8 @@ if __name__ == '__main__':
   
   openai.api_key = os.environ.get("OPENAI_API_KEY")
 
-  #whisper_model = whisper.load_model("small")
-  #image_to_text = pipeline("image-to-text", model="nlpconnect/vit-gpt2-image-captioning")
+  whisper_model = whisper.load_model("small")
+  image_to_text = pipeline("image-to-text", model="nlpconnect/vit-gpt2-image-captioning")
 
   temp_dir = tempfile.mkdtemp()
 
