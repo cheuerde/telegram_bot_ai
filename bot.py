@@ -246,16 +246,29 @@ async def image(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def mermaid(update: Update, context: ContextTypes.DEFAULT_TYPE):
-  try: 
+
+  try:
+
     prompt_in = ' '.join(context.args)
     command_file_name = os.path.join(temp_dir, 'mm_in.txt')
+    with open(command_file_name, "w") as f:
+      f.write(prompt_in)
     out_file_name = os.path.join(temp_dir, 'out.png')
+    out_file_name_pdf = os.path.join(temp_dir, 'out.pdf')
     command_args = ' -i ' + command_file_name +  ' -o ' + out_file_name
-    command = 'mmdc' + command_args + ' 2> /dev/null'
+    command_args_pdf = ' -i ' + command_file_name +  ' -o ' + out_file_name_pdf
+    #command = 'mmdc' + command_args + ' 2> /dev/null'
+    command = 'mmdc' + command_args
+    command_pdf = 'mmdc' + command_args_pdf
     os.system(command)
-    await context.bot.sendPhoto(chat_id=update.effective_chat.id, photo=out_file_name)
+    os.system(command_pdf)
+    photo = open(out_file_name, 'rb')
+    document = open(out_file_name_pdf, 'rb')
+    await context.bot.sendPhoto(chat_id=update.effective_chat.id, photo=photo)
+    await context.bot.send_document(chat_id=update.effective_chat.id, document=document)
 
   except Exception as e:
+
     response = "Mermaid Diagramm generation failed"
     await context.bot.send_message(chat_id=update.effective_chat.id, text=response)
 
@@ -327,14 +340,14 @@ if __name__ == '__main__':
   
   openai.api_key = os.environ.get("OPENAI_API_KEY")
 
-  whisper_model = whisper.load_model("small")
-  image_to_text = pipeline("image-to-text", model="nlpconnect/vit-gpt2-image-captioning")
+  #whisper_model = whisper.load_model("small")
+  #image_to_text = pipeline("image-to-text", model="nlpconnect/vit-gpt2-image-captioning")
 
   temp_dir = tempfile.mkdtemp()
 
   start_handler = CommandHandler('start', start)
   caps_handler = CommandHandler('caps', caps)
-  caps_handler = CommandHandler('mermaid', caps)
+  mermaid_handler = CommandHandler('mermaid', mermaid)
   voice_message_handler = MessageHandler(filters.VOICE, voice_message)
   audio_message_handler = MessageHandler(filters.AUDIO, audio_message)
   file_receive_handler = MessageHandler(filters.Document.ALL, file_receive)
