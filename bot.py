@@ -244,6 +244,22 @@ async def image(update: Update, context: ContextTypes.DEFAULT_TYPE):
     response = "Prompt refused by OpenAI API"
     await context.bot.send_message(chat_id=update.effective_chat.id, text=response)
 
+
+async def mermaid(update: Update, context: ContextTypes.DEFAULT_TYPE):
+  try: 
+    prompt_in = ' '.join(context.args)
+    command_file_name = os.path.join(temp_dir, 'mm_in.txt')
+    out_file_name = os.path.join(temp_dir, 'out.png')
+    command_args = ' -i ' + command_file_name +  ' -o ' + out_file_name
+    command = 'mmdc' + command_args + ' 2> /dev/null'
+    os.system(command)
+    await context.bot.sendPhoto(chat_id=update.effective_chat.id, photo=out_file_name)
+
+  except Exception as e:
+    response = "Mermaid Diagramm generation failed"
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=response)
+
+
 async def text_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
   prompt_in = update.message.text
@@ -318,6 +334,7 @@ if __name__ == '__main__':
 
   start_handler = CommandHandler('start', start)
   caps_handler = CommandHandler('caps', caps)
+  caps_handler = CommandHandler('mermaid', caps)
   voice_message_handler = MessageHandler(filters.VOICE, voice_message)
   audio_message_handler = MessageHandler(filters.AUDIO, audio_message)
   file_receive_handler = MessageHandler(filters.Document.ALL, file_receive)
@@ -332,6 +349,7 @@ if __name__ == '__main__':
 
   application.add_handler(start_handler)
   application.add_handler(caps_handler)
+  application.add_handler(mermaid_handler)
   application.add_handler(voice_message_handler)
   application.add_handler(audio_message_handler)
   application.add_handler(image_handler)
