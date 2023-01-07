@@ -4,6 +4,11 @@ import tempfile
 import os
 import openai
 import json
+import shutil
+import docx
+# for http parsing
+import requests
+from bs4 import BeautifulSoup
 from pdfminer.converter import TextConverter
 from pdfminer.pdfinterp import PDFPageInterpreter
 from pdfminer.pdfinterp import PDFResourceManager
@@ -16,6 +21,7 @@ laparams = LAParams()
 laparams.char_margin = 1
 laparams.word_margin = 2
 
+## pdf
 def extract_text_by_page(pdf_path):
     with open(pdf_path, 'rb') as fh:
         for page in PDFPage.get_pages(fh,
@@ -35,6 +41,13 @@ def extract_text_by_page(pdf_path):
             converter.close()
             fake_file_handle.close()
 
+
+def extract_text(pdf_path):
+    text = ""
+    for page in extract_text_by_page(pdf_path):
+        text += page
+    chapters = extract_chapters(text)
+    return chapters
 
 
 # if we have "chapters" headings
@@ -58,13 +71,6 @@ def extract_chapters(text, max_words=1000):
     chunks.append(chunk)
     return chunks
 
-
-def extract_text(pdf_path):
-    text = ""
-    for page in extract_text_by_page(pdf_path):
-        text += page
-    chapters = extract_chapters(text)
-    return chapters
 
 
 def create_summary(text, max_tokens_completion = 100, prompt_in = ''):
@@ -137,7 +143,6 @@ def summarize_pdf(summaries, overall_summary, file_out):
 
         # end the document
         f.write(r'\end{document}')
-
     # compile the LaTeX file into a PDF
     command_args = ' -output-directory=' + pdf_path +  ' ' + tex_file
     command = 'pdflatex' + command_args + ' 2> /dev/null'
@@ -154,14 +159,70 @@ def pdf_to_summary(file_in, file_out):
         return out
 
 
+# summary from text file
+def txt_file_to_summary(file_in, file_out):
+        with open(file_in, 'r') as file:
+        # Read the contents of the file into a single string
+        text = file.read()
+        chapter = extract_chapters(text, max_words = 1000)
+        summaries = generate_summaries(chapters, min_words_summary = 10)
+        overall_summary = create_summary(text = " ".join(summaries).replace('\\item', ''), max_tokens_completion = 400, prompt_in = 'From the given text, generate a concise overall summary: ')
+        overall_summary
+        out = summarize_pdf(summaries, overall_summary, file_out = file_out)
+        return out
 
-#def pdf_to_summary(file_in, file_out):
-#    try:
-#        chapters = extract_text(file)
-#        summaries = generate_summaries(chapters, min_words_summary = 10)
-#        overall_summary = create_summary(text = " ".join(summaries).replace('\\item', ''), max_tokens_completion = 400, prompt_in = 'From the given text, generate a concise overall summary: ')
-#        overall_summary
-#        out = summarize_pdf(summaries, overall_summary, file_out = file_out)
-#    except Exception as et:
-#        out = ['Error', 'Error Processing File']
-#    return out
+# summary from word file
+def docx_file_to_summary(file_in, file_out):
+        document = docx.Document(file_in)
+        # Create an empty string
+        text = ""
+        # Iterate over the paragraphs in the document
+        for paragraph in document.paragraphs:
+        # Add the text of each paragraph to the string
+        text += paragraph.text
+        chapter = extract_chapters(text, max_words = 1000)
+        summaries = generate_summaries(chapters, min_words_summary = 10)
+        overall_summary = create_summary(text = " ".join(summaries).replace('\\item', ''), max_tokens_completion = 400, prompt_in = 'From the given text, generate a concise overall summary: ')
+        overall_summary
+        out = summarize_pdf(summaries, overall_summary, file_out = file_out)
+        return out
+
+
+# powerpoint
+def pptx_file_to_summary(file_in, file_out):
+        presentation = pptx.Presentation(file_in)
+        # Create an empty string
+        text = ""
+        # Iterate over the slides in the presentation
+        for slide in presentation.slides:
+          # Iterate over the shapes on the slide
+          for shape in slide.shapes:
+            # Check if the shape is a text box
+            if shape.has_text_frame:
+              # Add the text of the text box to the string
+              text += shape.text
+        chapter = extract_chapters(text, max_words = 1000)
+        summaries = generate_summaries(chapters, min_words_summary = 10)
+        overall_summary = create_summary(text = " ".join(summaries).replace('\\item', ''), max_tokens_completion = 400, prompt_in = 'From the given text, generate a concise overall summary: ')
+        overall_summary
+        out = summarize_pdf(summaries, overall_summary, file_out = file_out)
+        return out
+
+
+# url
+def url_to_summary(url_in, file_out):
+        # Make an HTTP GET request to the webpage
+        response = requests.get(url_in)
+
+        # Parse the HTML of the webpage
+        soup = BeautifulSoup(response.text, 'html.parser')
+
+        # Find the text on the webpage
+        text = soup.get_text()
+        chapter = extract_chapters(text, max_words = 1000)
+        summaries = generate_summaries(chapters, min_words_summary = 10)
+        overall_summary = create_summary(text = " ".join(summaries).replace('\\item', ''), max_tokens_completion = 400, prompt_in = 'From the given text, generate a concise overall summary: ')
+        overall_summary
+        out = summarize_pdf(summaries, overall_summary, file_out = file_out)
+        return out
+
