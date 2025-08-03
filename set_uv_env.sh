@@ -19,6 +19,10 @@ uv venv --python=python3.11
 # Activate the virtual environment
 source .venv/bin/activate
 
+# Make sure we don't have conflicting telegram packages
+echo "Removing any conflicting telegram packages..."
+uv pip uninstall telegram -y || true
+
 # Install dependencies from existing requirements.txt
 echo "Installing dependencies from requirements.txt..."
 uv pip install -r requirements.txt

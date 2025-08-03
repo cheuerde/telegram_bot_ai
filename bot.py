@@ -11,7 +11,6 @@ import tempfile
 import urllib.parse
 from base64 import b64decode
 import make_summary
-from transformers import pipeline
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -149,30 +148,6 @@ async def audio_message(update: Update, context: CallbackContext):
   except Exception as et:
 
     response = "Whisper Error"
-
-  await update.message.reply_text(response)
-
-
-async def image_receive(update: Update, context: CallbackContext):
-  # get basic info about the voice note file and prepare it for downloading
-  #await context.bot.get_file(update.message.voice.file_id).download(out = open("voice_message.ogg", 'wb'))
-
-  file_id = update.message.photo[0].file_id
-  #file_name = update.message.photo[0].file_name
-  file_name = 'imag.png'
-  file = await context.bot.get_file(file_id)
-  out_file_name = os.path.join(temp_dir, file_name)
-  await file.download_to_drive(out_file_name)
-  await update.message.reply_text('Image File saved - Processing and making Caption')
-
-  try: 
-
-    result = image_to_text(out_file_name, max_new_tokens = 100)
-    response = result[0].get('generated_text')
-
-  except Exception as et:
-
-    response = "Image to Text Error"
 
   await update.message.reply_text(response)
 
@@ -342,8 +317,6 @@ if __name__ == '__main__':
   # Initialize OpenAI client
   openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
-  image_to_text = pipeline("image-to-text", model="nlpconnect/vit-gpt2-image-captioning")
-
   temp_dir = tempfile.mkdtemp()
 
   start_handler = CommandHandler('start', start)
@@ -356,7 +329,6 @@ if __name__ == '__main__':
   #whisper_handler = CommandHandler('whisper', whisper)
   text_message_handler = MessageHandler(filters.TEXT & ~filters.COMMAND, text_message)
   url_message_handler = MessageHandler(filters.Entity('url'), url_message)
-  image_receive_handler = MessageHandler(filters.PHOTO, image_receive)
 
   # and the handler when no command was entered and we just respond to the message
   application = ApplicationBuilder().token(telegram_api_key).build()
@@ -371,6 +343,5 @@ if __name__ == '__main__':
   application.add_handler(text_message_handler)
   application.add_handler(url_message_handler)
   application.add_handler(file_receive_handler)
-  application.add_handler(image_receive_handler)
 
   application.run_polling()

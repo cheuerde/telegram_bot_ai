@@ -1,8 +1,9 @@
 #!/bin/bash
 
-# Source the UV environment
-source ./setup_uv_env.sh
+# Activate the UV environment (don't source the setup script)
+source .venv/bin/activate
 
+# Install pyaudioop if needed
 uv pip install pyaudioop
 
 # Run the application
