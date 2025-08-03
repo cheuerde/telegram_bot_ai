@@ -4,13 +4,12 @@ from telegram.ext import filters, MessageHandler, ApplicationBuilder, CommandHan
 import requests
 import os
 import sqlite3
-import openai
+from openai import OpenAI
 import json
 import time
 import tempfile
 import urllib.parse
 from base64 import b64decode
-import whisper
 import make_summary
 from transformers import pipeline
 
@@ -25,6 +24,18 @@ def is_url(string):
     return all([result.scheme, result.netloc])
   except ValueError:
     return False
+
+def transcribe_audio(file_path):
+  """Transcribe audio using OpenAI Whisper API"""
+  try:
+    with open(file_path, "rb") as audio_file:
+      transcript = openai_client.audio.transcriptions.create(
+        model="whisper-1",
+        file=audio_file
+      )
+    return transcript.text
+  except Exception as e:
+    raise Exception(f"Whisper API Error: {str(e)}")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
   await context.bot.send_message(chat_id=update.effective_chat.id, text="I'm a bot, please talk to me!")
@@ -65,8 +76,7 @@ async def voice_message(update: Update, context: CallbackContext):
 
   try:
 
-    result = whisper_model.transcribe(out_file_name)
-    out_test = result["text"]
+    out_test = transcribe_audio(out_file_name)
 
     response = out_test
 
@@ -75,16 +85,14 @@ async def voice_message(update: Update, context: CallbackContext):
       # create openai response
       prompt_in = "Create a brief summary in the language of the message of the following message: " + out_test
 
-      out = openai.Completion.create(
-        model="text-davinci-003",
-        #model = "text-curie-001",
+      out = openai_client.completions.create(
+        model="gpt-3.5-turbo-instruct",
         prompt = prompt_in,
         max_tokens=1000,
         temperature=0.7
       )
 
-      json_object = json.loads(str(out))
-      response_summary = json_object['choices'][0]['text']
+      response_summary = out.choices[0].text
 
       response = response + summary_header + response_summary
 
@@ -113,8 +121,7 @@ async def audio_message(update: Update, context: CallbackContext):
 
   try:
 
-    result = whisper_model.transcribe(out_file_name)
-    out_test = result["text"]
+    out_test = transcribe_audio(out_file_name)
 
     response = out_test
 
@@ -123,16 +130,14 @@ async def audio_message(update: Update, context: CallbackContext):
       # create openai response
       prompt_in = "Create a brief summary in the language of the message of the following message: " + out_test
 
-      out = openai.Completion.create(
-        model="text-davinci-003",
-        #model = "text-curie-001",
+      out = openai_client.completions.create(
+        model="gpt-3.5-turbo-instruct",
         prompt = prompt_in,
         max_tokens=1000,
         temperature=0.7
       )
 
-      json_object = json.loads(str(out))
-      response_summary = json_object['choices'][0]['text']
+      response_summary = out.choices[0].text
 
       response = response + summary_header + response_summary
 
@@ -226,18 +231,16 @@ async def image(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     prompt_in = ' '.join(context.args)
 
-    out = openai.Image.create(
+    out = openai_client.images.generate(
       prompt = prompt_in,
       n=1,
       #size="256x256",
       size="512x512",
       #size="1024x1024",
       #response_format="b64_json"
-      response_format="url"
     )
 
-    json_object = json.loads(str(out))
-    response = json_object['data'][0]['url']
+    response = out.data[0].url
     await context.bot.sendPhoto(chat_id=update.effective_chat.id, photo=response)
 
   except Exception as e:
@@ -295,16 +298,14 @@ async def text_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 #   create openai response
 
-       out = openai.Completion.create(
-         model="text-davinci-003",
-         #model = "text-curie-001",
+       out = openai_client.completions.create(
+         model="gpt-3.5-turbo-instruct",
          prompt = prompt_in,
          max_tokens=1000,
          temperature=0.7
        )
 
-       json_object = json.loads(str(out))
-       response = json_object['choices'][0]['text']
+       response = out.choices[0].text
 
     except Exception as et:
 
@@ -330,7 +331,7 @@ async def url_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else: 
       await update.message.reply_text(out[1])
       document = open(out[0], 'rb')
-      await update.send_document(chat_id, document)
+      await context.bot.send_document(chat_id=update.effective_chat.id, document=document)
 
 
 if __name__ == '__main__':
@@ -338,9 +339,9 @@ if __name__ == '__main__':
   # get the api token from the env varialbe teelgram_api_key
   telegram_api_key = os.environ.get("TELEGRAM_API_KEY")
   
-  openai.api_key = os.environ.get("OPENAI_API_KEY")
+  # Initialize OpenAI client
+  openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
-  whisper_model = whisper.load_model("small")
   image_to_text = pipeline("image-to-text", model="nlpconnect/vit-gpt2-image-captioning")
 
   temp_dir = tempfile.mkdtemp()

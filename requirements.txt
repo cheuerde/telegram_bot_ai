@@ -1,10 +1,10 @@
-openai
+openai>=1.0.0
 pdfminer
 requests
 python-telegram-bot
-whisper
 python-docx
 python-pptx
 bs4
 tensorboard
 torch
+transformers
