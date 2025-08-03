@@ -1,37 +1,122 @@
-# telegram_bot_ai
+# Telegram Bot AI
 
-Telegram bot that uses AI tools for chat, image and audio
+A telegram bot for voice transcription, text generation, image creation, and document processing.
 
-# Dependencies
+## ✨ Features
 
- - [python-telegram-bot](https://github.com/python-telegram-bot/python-telegram-bot)
- - [openai](https://github.com/openai/openai-python)
- - [whisper](https://github.com/openai/whisper)
- - [vit-gpt2](https://huggingface.co/nlpconnect/vit-gpt2-image-captioning)
- - [A telegram bot with API Key](https://core.telegram.org/bots/tutorial)
- - [An OpenAI API Key](https://elephas.app/blog/how-to-create-openai-api-keys-cl5c4f21d281431po7k8fgyol0)
+- 🎤 **Voice/Audio Transcription** - High-quality speech-to-text using OpenAI Whisper API
+- 💬 **AI Chat** - Intelligent conversations powered by GPT-3.5-turbo-instruct
+- 🖼️ **Image Generation** - Create images from text descriptions using DALL-E
+- 📄 **Document Summarization** - Automatic summaries for PDF, DOC, PPT, and TXT files
+- 🌐 **URL Summarization** - Extract and summarize content from web pages
+- 📊 **Mermaid Diagrams** - Generate flowcharts and diagrams from text descriptions
 
-# Functions
+## 🛠️ Dependencies
 
- - [x] Instruction chat with bot (through [openai davinci](https://beta.openai.com/docs/models/overview))
- - [x] Image generation (through openai [DALLE](https://beta.openai.com/docs/guides/images/introduction), trigger with `/image`)
- - [x] Voice message transcription and summary (through [openai whisper](https://huggingface.co/openai/whisper-small) + [davinci](https://beta.openai.com/docs/models/overview))
- - [x] TLDR summarization for many text sources (pdf, docx, pptx, webpages through url, txt)
- - [x] Image to Text Capitoning using [vit-gpt2](https://huggingface.co/nlpconnect/vit-gpt2-image-captioning)
- - [ ] Generate [stories](https://github.com/cheuerde/story_generator)
- - [ ] Text to speech (read stories) - would love to use [tortoise-tts](https://github.com/neonbjb/tortoise-tts)
+- [python-telegram-bot](https://github.com/python-telegram-bot/python-telegram-bot) >=21.0
+- [openai](https://github.com/openai/openai-python) >=1.0.0
+- [pdfminer](https://pypi.org/project/pdfminer/) - PDF text extraction
+- [python-docx](https://pypi.org/project/python-docx/) - Word document processing
+- [python-pptx](https://pypi.org/project/python-pptx/) - PowerPoint processing
+- [beautifulsoup4](https://pypi.org/project/beautifulsoup4/) - Web scraping
+- [requests](https://pypi.org/project/requests/) - HTTP library
 
-# Usage
+## 🚀 Quick Setup with UV (Recommended)
 
-```sh
-export TELEGRAM_API_KEY="your_telegram_api_key"
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/cheuerde/telegram_bot_ai.git
+   cd telegram_bot_ai
+   ```
+
+2. **Set up environment variables**
+   ```bash
+   export TELEGRAM_API_KEY="your_telegram_bot_token"
+   export OPENAI_API_KEY="your_openai_api_key"
+   ```
+
+3. **Run the setup script**
+   ```bash
+   bash set_uv_env.sh
+   ```
+
+4. **Start the bot**
+   ```bash
+   bash run_app.sh
+   ```
+
+## 📋 Manual Setup
+
+If you prefer manual installation:
+
+```bash
+# Create virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Set environment variables
+export TELEGRAM_API_KEY="your_telegram_bot_token"
 export OPENAI_API_KEY="your_openai_api_key"
 
-python3 bot.py
+# Run the bot
+python bot.py
 ```
 
-# Screenshots 
+## 🎯 Bot Commands & Features
 
-![](./data/audio_example.png)
+### Text Commands
+- **General Chat** - Just send any text message for AI-powered responses
+- `/start` - Initialize the bot
+- `/caps [text]` - Convert text to uppercase
+- `/image [description]` - Generate images from text descriptions
+- `/mermaid [diagram_code]` - Create Mermaid diagrams
 
-![](./data/chat_example.png)
+### File Processing
+- **Voice Messages** - Automatic transcription + summary
+- **Audio Files** - Transcription + summary  
+- **PDF Files** - Text extraction + summary
+- **Word Documents** (.doc, .docx) - Content extraction + summary
+- **PowerPoint** (.ppt, .pptx) - Content extraction + summary
+- **Text Files** (.txt) - Content summary
+- **URLs** - Web page content extraction + summary
+
+## 🔧 API Requirements
+
+### Telegram Bot Token
+1. Message [@BotFather](https://t.me/botfather) on Telegram
+2. Create a new bot with `/newbot`
+3. Copy the provided API token
+
+### OpenAI API Key
+1. Visit [OpenAI API Keys](https://platform.openai.com/api-keys)
+2. Create a new API key
+3. Ensure you have credits/billing set up
+
+## 🎨 Technologies Used
+
+- **OpenAI Whisper API** - Advanced speech-to-text transcription
+- **GPT-3.5-turbo-instruct** - Text generation and chat
+- **DALL-E** - AI image generation
+- **Python-telegram-bot** - Telegram Bot API wrapper
+- **UV** - Fast Python package installer
+
+## 📸 Screenshots
+
+![Audio Processing Example](./data/audio_example.png)
+
+![Chat Example](./data/chat_example.png)
+
+## 🔄 Recent Updates
+
+- ✅ Migrated from local Whisper to OpenAI Whisper API
+- ✅ Updated to latest OpenAI Python client (v1.0+)
+- ✅ Removed heavy dependencies (PyTorch, Transformers)
+- ✅ Added UV-based environment management
+- ✅ Improved error handling and fallbacks
+
+## 📝 License
+
+This project is open source and available under the [MIT License](LICENSE).
