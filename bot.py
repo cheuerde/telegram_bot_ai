@@ -124,7 +124,7 @@ async def voice_message(update: Update, context: CallbackContext):
   await file.download_to_drive(out_file_name)
   await update.message.reply_text('Audio File saved - Processing and making summary')
 
-  summary_header = "\n\n=======\nSummary\n=======\n"
+  summary_header = "\n\n=======\nSummary\n=======\n\n"
 
   try:
 
