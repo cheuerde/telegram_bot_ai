@@ -45,6 +45,45 @@ A telegram bot for voice transcription, text generation, image creation, and doc
    bash run_app.sh
    ```
 
+## 🔄 Production Setup (Auto-Restart & Monitoring)
+
+For reliable production deployment on your server:
+
+1. **Setup monitoring system**
+   ```bash
+   bash setup_monitoring.sh
+   ```
+
+2. **Add cron job for auto-monitoring** (every 2 minutes)
+   ```bash
+   crontab -e
+   # Add this line:
+   */2 * * * * /path/to/telegram_bot_ai/monitor_bot.sh >> /path/to/telegram_bot_ai/logs/cron.log 2>&1
+   ```
+
+3. **Add weekly log rotation** (optional, prevents logs from growing too large)
+   ```bash
+   crontab -e
+   # Add this line:
+   0 2 * * 0 /path/to/telegram_bot_ai/rotate_logs.sh
+   ```
+
+4. **Bot management commands**
+   ```bash
+   ./monitor_bot.sh start    # Start the bot
+   ./monitor_bot.sh stop     # Stop the bot  
+   ./monitor_bot.sh restart  # Restart the bot
+   ./monitor_bot.sh status   # Check bot status
+   ```
+
+### 🛡️ Monitoring Features
+- **Auto-restart** on crashes or hangs
+- **Smart failure detection** (checks for errors in logs)
+- **Restart limits** (max 5 restarts to prevent infinite loops)
+- **Comprehensive logging** (bot output, monitoring events, cron activity)
+- **Log rotation** (prevents disk space issues)
+- **PID tracking** (reliable process management)
+
 ## 📋 Manual Setup
 
 If you prefer manual installation:
