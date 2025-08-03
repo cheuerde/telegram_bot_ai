@@ -1,10 +1,7 @@
 #!/bin/bash
 
-# Activate the UV environment (don't source the setup script)
+# Activate the UV environment
 source .venv/bin/activate
-
-# Install pyaudioop if needed
-uv pip install pyaudioop
 
 # Run the application
 python bot.py

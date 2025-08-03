@@ -5,4 +5,3 @@ python-telegram-bot>=21.0
 python-docx
 python-pptx
 bs4
-pyaudioop
