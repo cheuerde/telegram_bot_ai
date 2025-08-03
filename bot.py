@@ -25,16 +25,26 @@ def is_url(string):
     return False
 
 def transcribe_audio(file_path):
-  """Transcribe audio using OpenAI Whisper API"""
+  """Transcribe audio using OpenAI's most advanced GPT-4o based transcription"""
   try:
     with open(file_path, "rb") as audio_file:
       transcript = openai_client.audio.transcriptions.create(
-        model="whisper-1",
-        file=audio_file
+        model="gpt-4o-audio-preview",
+        file=audio_file,
+        response_format="text"
       )
-    return transcript.text
+    return transcript.text if hasattr(transcript, 'text') else transcript
   except Exception as e:
-    raise Exception(f"Whisper API Error: {str(e)}")
+    # Fallback to whisper-1 if GPT-4o audio is not available
+    try:
+      with open(file_path, "rb") as audio_file:
+        transcript = openai_client.audio.transcriptions.create(
+          model="whisper-1",
+          file=audio_file
+        )
+      return transcript.text
+    except Exception as fallback_error:
+      raise Exception(f"Transcription Error: Primary model failed: {str(e)}, Fallback failed: {str(fallback_error)}")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
   await context.bot.send_message(chat_id=update.effective_chat.id, text="I'm a bot, please talk to me!")
