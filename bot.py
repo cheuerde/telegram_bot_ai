@@ -39,6 +39,56 @@ def transcribe_audio(file_path):
   except Exception as e:
     raise Exception(f"Transcription Error: {str(e)}")
 
+def create_summary(text, language_hint="auto"):
+  """Create a concise bullet-point summary using GPT-4"""
+  try:
+    # Detect if text is German or English for better prompting
+    is_german = any(word in text.lower() for word in ['und', 'der', 'die', 'das', 'ist', 'eine', 'ein', 'ich', 'bin', 'haben', 'sind'])
+    
+    if is_german:
+      prompt = f"""Erstelle eine präzise Zusammenfassung des folgenden Textes auf Deutsch:
+
+REGELN:
+- Maximal 3-5 Stichpunkte
+- Jeder Punkt maximal 15 Wörter
+- Nur die wichtigsten Informationen
+- Keine Übersetzung, nur Zusammenfassung
+- Verwende Bullet Points (•)
+
+TEXT:
+{text}
+
+ZUSAMMENFASSUNG:"""
+    else:
+      prompt = f"""Create a precise summary of the following text in English:
+
+RULES:
+- Maximum 3-5 bullet points
+- Each point maximum 15 words
+- Only the most important information
+- Use bullet points (•)
+- Be extremely concise
+
+TEXT:
+{text}
+
+SUMMARY:"""
+
+    response = openai_client.chat.completions.create(
+      model="gpt-4o-mini",  # Fast and cost-effective
+      messages=[
+        {"role": "system", "content": "You are an expert at creating concise, bullet-point summaries. Always follow the exact format requested."},
+        {"role": "user", "content": prompt}
+      ],
+      max_tokens=200,  # Shorter to force conciseness
+      temperature=0.3  # Lower temperature for more focused output
+    )
+    
+    return response.choices[0].message.content.strip()
+    
+  except Exception as e:
+    return f"Summary Error: {str(e)}"
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
   await context.bot.send_message(chat_id=update.effective_chat.id, text="I'm a bot, please talk to me!")
 
@@ -84,28 +134,18 @@ async def voice_message(update: Update, context: CallbackContext):
 
     try:
 
-      # create openai response
-      prompt_in = "Create a brief summary in the language of the message of the following message: " + out_test
-
-      out = openai_client.completions.create(
-        model="gpt-3.5-turbo-instruct",
-        prompt = prompt_in,
-        max_tokens=1000,
-        temperature=0.7
-      )
-
-      response_summary = out.choices[0].text
+      # Create concise summary
+      response_summary = create_summary(out_test)
 
       response = response + summary_header + response_summary
 
     except Exception as et:
 
-      response = response + summary_header + "OpenAI Error"
-      # response = context.args
+      response = response + summary_header + "Summary Error"
 
   except Exception as et:
 
-    response = "Whisper Error"
+    response = "Transcription Error"
 
   await update.message.reply_text(response)
 
@@ -129,28 +169,18 @@ async def audio_message(update: Update, context: CallbackContext):
 
     try:
 
-      # create openai response
-      prompt_in = "Create a brief summary in the language of the message of the following message: " + out_test
-
-      out = openai_client.completions.create(
-        model="gpt-3.5-turbo-instruct",
-        prompt = prompt_in,
-        max_tokens=1000,
-        temperature=0.7
-      )
-
-      response_summary = out.choices[0].text
+      # Create concise summary
+      response_summary = create_summary(out_test)
 
       response = response + summary_header + response_summary
 
     except Exception as et:
 
-      response = response + summary_header + "OpenAI Error"
-      # response = context.args
+      response = response + summary_header + "Summary Error"
 
   except Exception as et:
 
-    response = "Whisper Error"
+    response = "Transcription Error"
 
   await update.message.reply_text(response)
 
@@ -274,16 +304,18 @@ async def text_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
 
-#   create openai response
-
-       out = openai_client.completions.create(
-         model="gpt-3.5-turbo-instruct",
-         prompt = prompt_in,
-         max_tokens=1000,
-         temperature=0.7
-       )
-
-       response = out.choices[0].text
+      # Create intelligent chat response using GPT-4o-mini
+      response_obj = openai_client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+          {"role": "system", "content": "You are a helpful assistant. Respond naturally and concisely in the same language as the user's message. Keep responses under 150 words unless more detail is specifically requested."},
+          {"role": "user", "content": prompt_in}
+        ],
+        max_tokens=300,
+        temperature=0.7
+      )
+      
+      response = response_obj.choices[0].message.content
 
     except Exception as et:
 
