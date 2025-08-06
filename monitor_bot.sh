@@ -3,12 +3,25 @@
 # Bot monitoring and auto-restart script
 # This script checks if the bot is running and restarts it if needed
 
-BOT_DIR="/home/cheuer/telegram_bot_ai"
+# Get script directory (works from any location)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BOT_DIR="$SCRIPT_DIR"
 BOT_SCRIPT="bot.py"
 LOGFILE="$BOT_DIR/bot_monitor.log"
 PIDFILE="$BOT_DIR/bot.pid"
 MAX_RESTARTS=5
 RESTART_COUNT_FILE="$BOT_DIR/restart_count.txt"
+
+# Ensure we're in the right directory
+cd "$BOT_DIR"
+
+# Load environment variables if .env file exists
+if [ -f "$BOT_DIR/.env" ]; then
+    source "$BOT_DIR/.env"
+fi
+
+# Export common paths for cron compatibility
+export PATH="/usr/local/bin:/usr/bin:/bin:$PATH"
 
 # Function to log messages with timestamp
 log_message() {
@@ -53,14 +66,44 @@ is_bot_running() {
 start_bot() {
     cd "$BOT_DIR"
     
+    # Check if environment variables are set
+    if [ -z "$TELEGRAM_API_KEY" ] || [ -z "$OPENAI_API_KEY" ]; then
+        log_message "ERROR: Environment variables TELEGRAM_API_KEY or OPENAI_API_KEY not set"
+        return 1
+    fi
+    
+    # Check if virtual environment exists
+    if [ ! -d ".venv" ]; then
+        log_message "ERROR: Virtual environment .venv not found in $BOT_DIR"
+        return 1
+    fi
+    
     # Activate virtual environment
     source .venv/bin/activate
     
+    # Check if bot script exists
+    if [ ! -f "$BOT_SCRIPT" ]; then
+        log_message "ERROR: Bot script $BOT_SCRIPT not found in $BOT_DIR"
+        return 1
+    fi
+    
     # Start bot in background and save PID
     nohup python "$BOT_SCRIPT" > bot_output.log 2>&1 &
-    echo $! > "$PIDFILE"
+    local bot_pid=$!
+    echo $bot_pid > "$PIDFILE"
     
-    log_message "Bot started with PID $(cat $PIDFILE)"
+    # Give it a moment to start
+    sleep 2
+    
+    # Verify it started successfully
+    if ps -p "$bot_pid" > /dev/null 2>&1; then
+        log_message "Bot started successfully with PID $bot_pid"
+        return 0
+    else
+        log_message "ERROR: Bot failed to start"
+        rm -f "$PIDFILE"
+        return 1
+    fi
 }
 
 # Function to stop the bot
