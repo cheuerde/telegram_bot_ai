@@ -1,0 +1,42 @@
+[Unit]
+Description=Telegram Bot AI - Voice transcription, chat, and document summarization
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=cheuer
+Group=cheuer
+WorkingDirectory=/home/cheuer/telegram_bot_ai
+
+# Environment file with API keys
+EnvironmentFile=/home/cheuer/telegram_bot_ai/.env
+
+# Use the virtual environment
+ExecStart=/home/cheuer/telegram_bot_ai/.venv/bin/python /home/cheuer/telegram_bot_ai/bot.py
+
+# Restart configuration - this is what makes it rock solid
+Restart=always
+RestartSec=10
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+# If we hit 5 restarts in 5 minutes, wait 10 minutes before trying again
+# (systemd will reset the burst counter after StartLimitIntervalSec)
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=telegram-bot
+
+# Security hardening (optional but recommended)
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Resource limits
+MemoryMax=512M
+CPUQuota=50%
+
+[Install]
+WantedBy=multi-user.target
+
