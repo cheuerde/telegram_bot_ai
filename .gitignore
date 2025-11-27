@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Environment
+.env
+
+# Runtime files
+bot.pid
+bot_output.log
+*.log
+
+# Temp files
+tmp/
+*.tmp
+
+# OS
+.DS_Store
+
