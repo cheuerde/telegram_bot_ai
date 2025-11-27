@@ -28,8 +28,16 @@ laparams = LAParams()
 laparams.char_margin = 1
 laparams.word_margin = 2
 
-# Initialize OpenAI client
-openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+# Lazy-initialized OpenAI client
+_openai_client = None
+
+
+def get_openai_client():
+    """Get or create OpenAI client (lazy initialization)."""
+    global _openai_client
+    if _openai_client is None:
+        _openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+    return _openai_client
 
 
 def extract_text_by_page(pdf_path: str):
@@ -81,7 +89,7 @@ def create_summary(text: str, max_tokens: int = 100, prompt_prefix: str = '') ->
     try:
         prompt = prompt_prefix + text
 
-        response = openai_client.chat.completions.create(
+        response = get_openai_client().chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {
